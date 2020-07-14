@@ -11,6 +11,7 @@ class Process(object):
 		self.name = alphabet[num]
 		self.init_arrival = 0
 		self.num_bursts = 0
+		self.current_burst = 0
 		self.cpu_times = []
 		self.io_times = []
 
@@ -26,8 +27,14 @@ class Process(object):
 	def get_cpu_io_times(self, burst):
 		return self.cpu_times[burst], self.io_times[burst]
 
+	def get_current_burst(self):
+		return self.current_burst
+
 	def change_CPU_time(self, burst, new_time):
 		self.cpu_times[burst] = new_time
+
+	def increment_burst(self):
+		self.current_burst += 1
 
 	def make_bursts(self, lamb, upper_bound):
 		self.init_arrival = int(math.floor(random.get_random(lamb, upper_bound)))
@@ -44,17 +51,13 @@ class Process(object):
 
 
 class Simulation(object):
-	def __init__(self, cs_time):
+	def __init__(self):
 		self.queue = []
 		self.cpu = None
 		self.io = {}
-		self.cs_time = cs_time
 
 	def get_CPU_process(self):
 		return self.cpu
-
-	def get_cs_time(self):
-		return self.cs_time
 
 	def get_next_process(self):
 		if len(self.queue) > 0:
@@ -131,11 +134,15 @@ def fcfs():
 	print("")
 
 def sortByCPUTime(process):
-	cpu, io = process.get_cpu_io_times()
+	cpu, io = process.get_cpu_io_times(process.get_current_burst())
 	return cpu
 
 def sjf(temp_processes, cs_time, alpha):
 	processes = sorted(temp_processes, key = sortByCPUTime)
+
+	sjf_simulation = Simulation()
+	
+
 	print("time 0ms: " + "Simulator started for SJF [Q <empty>]")
 	print("")
 
@@ -150,7 +157,7 @@ def rr(temp_processes, slice_time, cs_time):
 	processes = sorted(temp_processes, key = sortByArrivalTime)
 	print("time 0ms: " + "Simulator started for RR [Q <empty>]")
 
-	rr_simulation = Simulation(cs_time)
+	rr_simulation = Simulation()
 
 	current_arrival = 0
 	current_cpu_process = rr_simulation.get_CPU_process()
