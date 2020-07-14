@@ -130,8 +130,8 @@ def fcfs():
 	print("time 0ms: " + "Simulator started for FCFS [Q <empty>]")
 	print("")
 
-def sortByCPUTime(process, burst):
-	cpu, io = process.get_cpu_io_times(burst)
+def sortByCPUTime(process):
+	cpu, io = process.get_cpu_io_times()
 	return cpu
 
 def sjf(temp_processes, cs_time, alpha):
