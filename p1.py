@@ -30,7 +30,7 @@ class Process(object):
 	def get_current_burst(self):
 		return self.current_burst
 
-	def change_CPU_time(self, burst, new_time):
+	def change_cpu_time(self, burst, new_time):
 		self.cpu_times[burst] = new_time
 
 	def increment_burst(self):
@@ -128,18 +128,104 @@ def printSwitchToIO(timer, name, io_time):
 	print("time " + str(int(timer)) + "ms: " + "Process " + name + " switching out of CPU; will block on I/O until time " + str(int(io_time)) + "ms", end = " ")
 
 def printIOComplete(timer, name):
-	print("time " + str(int(timer)) + "ms: " + "Process " + name + " complete I/O; added to ready queue", end = " ")
+	print("time " + str(int(timer)) + "ms: " + "Process " + name + " completed I/O; added to ready queue", end = " ")
 
 def printTermination(timer, name):
-	print("time " + str(int(timer)) + "ms: " + "Process " + name + " terminated", end = " ")	
+	print("time " + str(int(timer)) + "ms: " + "Process " + name + " terminated", end = " ")
+
+def printPreemption(timer, name, cpu_time):
+	print("time " + str(int(timer)) + "ms: " + "Time slice expired; process " + name + " preempted with " + str(int(cpu_time)) + "ms to go", end = " ")
 
 def process_arrival(process):
 	print("Process " + str(process.get_name()) + " [NEW] (arrival time " + str(process.get_init_arrival()) + " ms) " + str(process.get_num_bursts()) + " CPU bursts")
 	#print process.arrival()
 
 # main simulation functions
-def fcfs():
+def fcfs(temp_processes, cs_time):
+	processes = sorted(temp_processes, key = sortByArrivalTime)
 	print("time 0ms: " + "Simulator started for FCFS [Q <empty>]")
+
+	fcfs_simulation = Simulation()
+
+	current_arrival = 0
+	current_cpu_process = fcfs_simulation.get_CPU_process()
+	current_bursts = {}
+	terminated_processes = {}
+	for i in range(len(processes)):
+		current_bursts[processes[i].get_name()] = 0
+		terminated_processes[processes[i].get_name()] = False
+	timer = 0
+	cpu_start_time = 0
+	cpu_available_time = 0
+	complete_io_processes = []
+	checked = False
+
+	while True:
+
+		# new arrival
+		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
+			fcfs_simulation.addProcessToQueue(processes[current_arrival])
+			printArrival(timer, processes[current_arrival].get_name())
+			fcfs_simulation.print_queue()
+			current_arrival += 1
+			continue
+
+		# CPU process done, switch to I/O
+		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0] == timer:
+			fcfs_simulation.removeProcessFromCPU(current_cpu_process)
+			num_bursts = current_cpu_process.get_num_bursts() - current_bursts[current_cpu_process.get_name()] - 1
+			if num_bursts <= 0:
+				printTermination(timer, current_cpu_process.get_name())
+				fcfs_simulation.print_queue()
+				terminated_processes[current_cpu_process.get_name()] = True
+			else:
+				printCPUEnd(timer, current_cpu_process.get_name(), num_bursts)
+				fcfs_simulation.print_queue()
+				fcfs_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[1] + (cs_time/2))
+				printSwitchToIO(timer, current_cpu_process.get_name(), fcfs_simulation.get_io_end_time(current_cpu_process))
+				fcfs_simulation.print_queue()
+			cpu_available_time = timer + (cs_time/2)
+			current_bursts[current_cpu_process.get_name()] += 1
+			current_cpu_process = fcfs_simulation.get_CPU_process()
+			continue
+
+		# add to CPU
+		if fcfs_simulation.queue_size() > 0 and current_cpu_process == None:
+			#timer += (cs_time/2)
+			fcfs_simulation.addProcessToCPU(fcfs_simulation.get_next_process())
+			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
+			current_cpu_process = fcfs_simulation.get_CPU_process()
+			checked = False
+			continue
+
+		# print addition to CPU
+		if timer == cpu_start_time and not checked:
+			checked = True
+			printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0])
+			fcfs_simulation.print_queue()
+
+		# add processes done with I/O to queue
+		complete_io_processes = fcfs_simulation.get_complete_io_processes(timer)
+		if len(complete_io_processes) > 0:
+			for process in complete_io_processes:
+				fcfs_simulation.removeProcessFromIO(process)
+				fcfs_simulation.addProcessToQueue(process)
+				printIOComplete(timer, process.get_name())
+				fcfs_simulation.print_queue()
+			continue
+
+		# all processes terminated
+		if False not in terminated_processes.values():
+			break
+
+
+		timer += 1
+		# testing
+		# if timer > 29000:
+		# 	break
+
+	timer += 2
+	print("time " + str(int(timer)) + "ms: " + "Simulator ended for FCFS [Q <empty>]")
 	print("")
 
 def sortByCPUTime(process):
@@ -178,7 +264,9 @@ def rr(temp_processes, slice_time, cs_time):
 		terminated_processes[processes[i].get_name()] = False
 	timer = 0
 	cpu_start_time = 0
+	cpu_available_time = 0
 	complete_io_processes = []
+	checked = False
 
 	while True:
 
@@ -203,20 +291,42 @@ def rr(temp_processes, slice_time, cs_time):
 				rr_simulation.print_queue()
 				rr_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[1] + (cs_time/2))
 				printSwitchToIO(timer, current_cpu_process.get_name(), rr_simulation.get_io_end_time(current_cpu_process))
-				rr_simulation.print_queue()		
+				rr_simulation.print_queue()
+			cpu_available_time = timer + (cs_time/2)
 			current_bursts[current_cpu_process.get_name()] += 1
 			current_cpu_process = rr_simulation.get_CPU_process()
 			continue
 
+		# CPU process preempted, add to queue
+		# if current_cpu_process != None and cpu_start_time + slice_time == timer:
+		# 	if rr_simulation.queue_size() == 0:
+		# 		print("time " + str(int(timer)) + "ms: " + "Time slice expired; no preemption because ready queue is empty", end = " ")
+		# 		rr_simulation.print_queue()
+		# 	else:
+		# 		rr_simulation.removeProcessFromCPU(current_cpu_process)
+		# 		new_time = current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0] - slice_time
+		# 		current_cpu_process.change_cpu_time(current_bursts[current_cpu_process.get_name()], new_time)
+		# 		printPreemption(timer, current_cpu_process.get_name(), new_time)
+		# 		rr_simulation.print_queue()
+		# 		rr_simulation.addProcessToQueue(current_cpu_process)
+		# 		cpu_available_time = timer + (cs_time/2)
+		# 		current_cpu_process = rr_simulation.get_CPU_process()
+		# 	continue
+
 		# add to CPU
 		if rr_simulation.queue_size() > 0 and current_cpu_process == None:
-			timer += (cs_time/2)
+			#timer += (cs_time/2)
 			rr_simulation.addProcessToCPU(rr_simulation.get_next_process())
-			cpu_start_time = timer
+			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			current_cpu_process = rr_simulation.get_CPU_process()
+			checked = False
+			continue
+
+		# print addition to CPU
+		if timer == cpu_start_time and not checked:
+			checked = True
 			printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0])
 			rr_simulation.print_queue()
-			continue
 
 		# add processes done with I/O to queue
 		complete_io_processes = rr_simulation.get_complete_io_processes(timer)
@@ -232,11 +342,10 @@ def rr(temp_processes, slice_time, cs_time):
 		if False not in terminated_processes.values():
 			break
 
-
 		timer += 1
 		# testing
-		# if timer > 457:
-		# 	break
+		if timer > 42000:
+			break
 
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for RR [Q <empty>]")
@@ -262,7 +371,7 @@ for i in range(num_processes):
 	processes[i].make_bursts(lamb, upper_bound)
 	process_arrival(processes[i])
 
-fcfs()
+fcfs(processes, cs_time)
 
 for i in range(num_processes):
 	process_arrival(processes[i])
