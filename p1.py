@@ -39,7 +39,7 @@ class Process(object):
 	def increment_burst(self):
 		self.current_burst += 1
 
-	def reset_bursts():
+	def reset_bursts(self):
 		self.current_burst = 0
 
 	def make_bursts(self, lamb, upper_bound):
@@ -277,7 +277,7 @@ def sjf(temp_processes, cs_time, alpha):
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
-			sjf_simulation.addProcessToQueue(processes[current_arrival], timer)
+			sjf_simulation.addProcessToQueue(processes[current_arrival])
 			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
 			printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name())
 			sjf_simulation.print_queue()
