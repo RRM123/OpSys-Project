@@ -7,11 +7,14 @@ alphabet = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G', 8: 'H', 9: '
 random = rand.Random()
 
 class Process(object):
-	def __init__(self, num):
+	def __init__(self, num, lamb, alpha):
 		self.name = alphabet[num]
 		self.init_arrival = 0
 		self.num_bursts = 0
 		self.current_burst = 0
+		self.alpha = alpha
+		self.tau = 1 / lamb
+		print(self.tau)
 		self.cpu_times = []
 		self.io_times = []
 
@@ -35,6 +38,9 @@ class Process(object):
 
 	def increment_burst(self):
 		self.current_burst += 1
+
+	def reset_bursts():
+		self.current_burst = 0
 
 	def make_bursts(self, lamb, upper_bound):
 		self.init_arrival = int(math.floor(random.get_random(lamb, upper_bound)))
@@ -233,7 +239,13 @@ def fcfs(temp_processes, cs_time):
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for FCFS [Q <empty>]")
 	print("")
-
+"""
+def resolveTie(sjf_simulation):
+	n = sjf_simulation.queue_size
+	for i in range(n):
+		for j in range(0, n - i - 1):
+			//HERE HRERE RHEREHRERASDFJASDFADSFJASDLFALSDFKALSDFKALDSFKLASDKFLASDFKLADSFKASDLFKADSLFKADSLFKASLDFAKF
+"""
 def sortByCPUTime(process):
 	return process.get_cpu_io_times(process.get_current_burst())[0]
 
@@ -416,7 +428,7 @@ processes = [None] * num_processes
 temp_seed = seed
 
 for i in range(num_processes):
-	processes[i] = Process(i+1)
+	processes[i] = Process(i+1, lamb, alpha)
 	processes[i].make_bursts(lamb, upper_bound)
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
