@@ -30,6 +30,9 @@ class Process(object):
 	def get_current_burst(self):
 		return self.current_burst
 
+	def reset_bursts(self):
+		self.current_burst = 0
+
 	def change_CPU_time(self, burst, new_time):
 		self.cpu_times[burst] = new_time
 
@@ -104,6 +107,12 @@ class Simulation(object):
 				print(self.queue[i].get_name(), end = " ")
 			print(self.queue[len(self.queue)-1].get_name() + "]")
 
+	def sortSJFHelper(process):
+		return process.get_cpu_io_times(process.get_current_burst())[0]
+
+	def sortQueueSJF(self):
+		self.queue = sorted(self.queue, key = self.sortSJFHelper())
+
 	def reset(self):
 		self.queue = []
 		self.cpu = None
@@ -134,16 +143,59 @@ def fcfs():
 	print("")
 
 def sortByCPUTime(process):
-	cpu, io = process.get_cpu_io_times(process.get_current_burst())
-	return cpu
+	return process.get_cpu_io_times(process.get_current_burst())[0]
 
 def sjf(temp_processes, cs_time, alpha):
-	processes = sorted(temp_processes, key = sortByCPUTime)
+	processes = sorted(temp_processes, key = sortByArrivalTime)
 
 	sjf_simulation = Simulation()
 	
-
+	add_half_context = False
+	current_arrival = 0
+	current_cpu_process = sjf_simulation.get_CPU_process()
+	timer = 0
+	cpu_start_time = 0
 	print("time 0ms: " + "Simulator started for SJF [Q <empty>]")
+
+	while True:
+		# Move from CPU to I/O
+		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0] <= timer:
+			add_half_context = True
+			#timer += (cs_time/2)
+			sjf_simulation.removeProcessFromCPU(current_cpu_process)
+			sjf_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
+			current_cpu_process.increment_burst()
+			printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst())
+			sjf_simulation.print_queue()
+			printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
+			sjf_simulation.print_queue()
+			current_cpu_process = sjf_simulation.get_CPU_process()
+
+		# Process Arrival
+		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
+			sjf_simulation.addProcessToQueue(processes[current_arrival], timer)
+			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
+			printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name())
+			sjf_simulation.print_queue()
+			current_arrival += 1
+
+		# Add to CPU
+		if sjf_simulation.queue_size() > 0 and current_cpu_process == None:
+			timer += (cs_time/2)
+			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
+			cpu_start_time = timer
+			current_cpu_process = sjf_simulation.get_CPU_process()
+			printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0])
+			sjf_simulation.print_queue()
+
+		if add_half_context:
+			timer += (cs_time/2)
+			add_half_context = False
+		else:
+			timer += 1
+		# testing
+		if timer > 189 and sjf_simulation.queue_size() == 0:
+			break
 	print("")
 
 def srt():
@@ -220,21 +272,26 @@ temp_seed = seed
 for i in range(num_processes):
 	processes[i] = Process(i+1)
 	processes[i].make_bursts(lamb, upper_bound)
+	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
 fcfs()
 
 for i in range(num_processes):
+	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
 sjf(processes, cs_time, alpha)
-
+"""
 for i in range(num_processes):
+	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
 srt()
 
 for i in range(num_processes):
+	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
 rr(processes, slice_time, cs_time)
+"""
