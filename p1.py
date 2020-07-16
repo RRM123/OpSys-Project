@@ -190,20 +190,12 @@ def fcfs(temp_processes, cs_time):
 		current_bursts[processes[i].get_name()] = 0
 		terminated_processes[processes[i].get_name()] = False
 	timer = 0
-	cpu_start_time = 0
+	cpu_start_time = -1
 	cpu_available_time = 0
 	complete_io_processes = []
 	checked = False
 
 	while True:
-
-		# new arrival
-		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
-			fcfs_simulation.addProcessToQueue(processes[current_arrival])
-			printArrival(timer, processes[current_arrival].get_name())
-			fcfs_simulation.print_queue()
-			current_arrival += 1
-			continue
 
 		# CPU process done, switch to I/O
 		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0] == timer:
@@ -247,6 +239,14 @@ def fcfs(temp_processes, cs_time):
 				fcfs_simulation.addProcessToQueue(process)
 				printIOComplete(timer, process.get_name())
 				fcfs_simulation.print_queue()
+			continue
+
+		# new arrival
+		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
+			fcfs_simulation.addProcessToQueue(processes[current_arrival])
+			printArrival(timer, processes[current_arrival].get_name())
+			fcfs_simulation.print_queue()
+			current_arrival += 1
 			continue
 
 		# all processes terminated
@@ -351,20 +351,12 @@ def rr(temp_processes, slice_time, cs_time):
 		current_bursts[processes[i].get_name()] = 0
 		terminated_processes[processes[i].get_name()] = False
 	timer = 0
-	cpu_start_time = 0
+	cpu_start_time = -1
 	cpu_available_time = 0
 	complete_io_processes = []
 	checked = False
 
 	while True:
-
-		# new arrival
-		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
-			rr_simulation.addProcessToQueue(processes[current_arrival])
-			printArrival(timer, processes[current_arrival].get_name())
-			rr_simulation.print_queue()
-			current_arrival += 1
-			continue
 
 		# CPU process done, switch to I/O
 		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0] == timer:
@@ -424,6 +416,14 @@ def rr(temp_processes, slice_time, cs_time):
 				rr_simulation.addProcessToQueue(process)
 				printIOComplete(timer, process.get_name())
 				rr_simulation.print_queue()
+			continue
+
+		# new arrival
+		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
+			rr_simulation.addProcessToQueue(processes[current_arrival])
+			printArrival(timer, processes[current_arrival].get_name())
+			rr_simulation.print_queue()
+			current_arrival += 1
 			continue
 
 		# all processes terminated
