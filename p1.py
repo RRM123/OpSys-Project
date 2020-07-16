@@ -301,13 +301,15 @@ def sjf(temp_processes, cs_time, alpha):
 			sjf_simulation.removeProcessFromCPU(current_cpu_process)
 			sjf_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
 			current_cpu_process.increment_burst()
-			printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
-			sjf_simulation.print_queue()
+			if (timer <= 999):
+				printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
+				sjf_simulation.print_queue()
 			current_cpu_process.update_tau()
-			printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
-			sjf_simulation.print_queue()
-			printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
-			sjf_simulation.print_queue()
+			if (timer <= 999):
+				printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
+				sjf_simulation.print_queue()
+				printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
+				sjf_simulation.print_queue()
 			current_cpu_process = sjf_simulation.get_CPU_process()
 
 		# Process Arrival
@@ -315,8 +317,9 @@ def sjf(temp_processes, cs_time, alpha):
 			sjf_simulation.addProcessToQueue(processes[current_arrival])
 			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
 			resolveTie(sjf_simulation.queue)
-			printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name(), processes[current_arrival].get_tau(), True)
-			sjf_simulation.print_queue()
+			if (timer <= 999):
+				printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name(), processes[current_arrival].get_tau(), True)
+				sjf_simulation.print_queue()
 			current_arrival += 1
 
 		# Add to CPU
@@ -325,8 +328,9 @@ def sjf(temp_processes, cs_time, alpha):
 			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
 			cpu_start_time = timer
 			current_cpu_process = sjf_simulation.get_CPU_process()
-			printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
-			sjf_simulation.print_queue()
+			if (timer <= 999):
+				printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
+				sjf_simulation.print_queue()
 
 		if add_half_context:
 			timer += (cs_time/2)
