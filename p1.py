@@ -14,7 +14,6 @@ class Process(object):
 		self.current_burst = 0
 		self.alpha = alpha
 		self.tau = 1 / lamb
-		print(self.tau)
 		self.cpu_times = []
 		self.io_times = []
 
@@ -239,13 +238,15 @@ def fcfs(temp_processes, cs_time):
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for FCFS [Q <empty>]")
 	print("")
-"""
+
 def resolveTie(sjf_simulation):
-	n = sjf_simulation.queue_size
+	n = sjf_simulation.queue_size()
 	for i in range(n):
 		for j in range(0, n - i - 1):
-			//HERE HRERE RHEREHRERASDFJASDFADSFJASDLFALSDFKALSDFKALDSFKLASDKFLASDFKLADSFKASDLFKADSLFKADSLFKASLDFAKF
-"""
+			if sjf_simulation.queue[j].tau == sjf_simulation.queue[j+1].tau:
+				if sjf_simulation.queue[j].get_name() > sjf_simulation.queue[j+1].get_name():
+					sjf_simulation.queue[j], sjf_simulation.queue[j+1] = sjf_simulation.queue[j+1], sjf_simulation.queue[j]
+
 def sortByCPUTime(process):
 	return process.get_cpu_io_times(process.get_current_burst())[0]
 
@@ -279,6 +280,7 @@ def sjf(temp_processes, cs_time, alpha):
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
 			sjf_simulation.addProcessToQueue(processes[current_arrival])
 			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
+			resolveTie(sjf_simulation)
 			printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name())
 			sjf_simulation.print_queue()
 			current_arrival += 1
@@ -440,7 +442,7 @@ for i in range(num_processes):
 	process_arrival(processes[i])
 
 sjf(processes, cs_time, alpha)
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -452,4 +454,4 @@ for i in range(num_processes):
 	process_arrival(processes[i])
 
 rr(processes, slice_time, cs_time)
-"""
+
