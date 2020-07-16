@@ -134,19 +134,19 @@ class Simulation(object):
 # print functions
 def printArrival(timer, name, tau = 0, isSJF = False):
 	if (isSJF):
-		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(tau) + "ms) arrived; added to ready queue", end = " ")
+		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(int(tau)) + "ms) arrived; added to ready queue", end = " ")
 	else:
 		print("time " + str(int(timer)) + "ms: " + "Process " + name + " arrived; added to ready queue", end = " ")
 
 def printCPUStart(timer, name, cpu_time, tau = 0, isSJF = False):
 	if (isSJF):
-		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(tau) + "ms) started using the CPU for " + str(int(cpu_time)) + "ms burst", end = " ")
+		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(int(tau)) + "ms) started using the CPU for " + str(int(cpu_time)) + "ms burst", end = " ")
 	else:
 		print("time " + str(int(timer)) + "ms: " + "Process " + name + " started using the CPU for " + str(int(cpu_time)) + "ms burst", end = " ")
 
 def printCPUEnd(timer, name, burst_num, tau = 0, isSJF = False):
 	if (isSJF):
-		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(tau) + "ms) completed a CPU burst; " + str(int(burst_num)) + " bursts to go", end = " ")
+		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(int(tau)) + "ms) completed a CPU burst; " + str(int(burst_num)) + " bursts to go", end = " ")
 	else:
 		print("time " + str(int(timer)) + "ms: " + "Process " + name + " completed a CPU burst; " + str(int(burst_num)) + " bursts to go", end = " ")
 
@@ -155,7 +155,7 @@ def printSwitchToIO(timer, name, io_time):
 
 def printIOComplete(timer, name, tau = 0, isSJF = False):
 	if (isSJF):
-		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(tau) + "ms) completed I/O; added to ready queue", end = " ")
+		print("time " + str(int(timer)) + "ms: " + "Process " + name + " (tau " + str(int(tau)) + "ms) completed I/O; added to ready queue", end = " ")
 	else:
 		print("time " + str(int(timer)) + "ms: " + "Process " + name + " completed I/O; added to ready queue", end = " ")
 
@@ -170,10 +170,13 @@ def printPreemption(timer, name, cpu_time, tau = 0, isSJF = False):
 
 def process_arrival(process, tau = 0, isSJF = False):
 	if (isSJF):
-		print("Process " + str(process.get_name()) + " [NEW] (arrival time " + str(process.get_init_arrival()) + " ms) " + str(process.get_num_bursts()) + " CPU bursts (tau " + str(tau) + "ms)")
+		print("Process " + str(process.get_name()) + " [NEW] (arrival time " + str(process.get_init_arrival()) + " ms) " + str(process.get_num_bursts()) + " CPU bursts (tau " + str(int(tau)) + "ms)")
 	else:
 		print("Process " + str(process.get_name()) + " [NEW] (arrival time " + str(process.get_init_arrival()) + " ms) " + str(process.get_num_bursts()) + " CPU bursts")
 	#print process.arrival()
+
+def printNewTau(timer, tau, process_name):
+	print("time " + str(int(timer)) + "ms: Recalculated tau = " + str(int(tau)) + "ms for process " + process_name, end = " ")
 
 # main simulation functions
 def fcfs(temp_processes, cs_time):
@@ -297,6 +300,8 @@ def sjf(temp_processes, cs_time, alpha):
 			printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
 			sjf_simulation.print_queue()
 			current_cpu_process.update_tau()
+			printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
+			sjf_simulation.print_queue()
 			printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
 			sjf_simulation.print_queue()
 			current_cpu_process = sjf_simulation.get_CPU_process()
@@ -464,7 +469,7 @@ fcfs(processes, cs_time)
 """
 for i in range(num_processes):
 	processes[i].reset_bursts()
-	process_arrival(processes[i])
+	process_arrival(processes[i], processes[i].get_tau(), True)
 
 sjf(processes, cs_time, alpha)
 """
