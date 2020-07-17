@@ -281,7 +281,7 @@ def resolveTie(sjf_queue):
 def sortByCPUTime(process):
 	return process.get_tau()
 
-def sjf(temp_processes, cs_time, alpha):
+def sjf(temp_processes, cs_time):
 	processes = sorted(temp_processes, key = sortByArrivalTime)
 
 	sjf_simulation = Simulation()
@@ -291,11 +291,13 @@ def sjf(temp_processes, cs_time, alpha):
 	current_cpu_process = sjf_simulation.get_CPU_process()
 	timer = 0
 	cpu_start_time = 0
+	cpu_available_time = 0
+	checked = False
 	print("time 0ms: " + "Simulator started for SJF [Q <empty>]")
 
 	while True:
 		# Move from CPU to I/O
-		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0] <= timer:
+		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0] == timer:
 			add_half_context = True
 			#timer += (cs_time/2)
 			sjf_simulation.removeProcessFromCPU(current_cpu_process)
@@ -304,6 +306,7 @@ def sjf(temp_processes, cs_time, alpha):
 				sjf_simulation.print_queue()
 			else:
 				sjf_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
+				#print(current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] )
 				current_cpu_process.increment_burst()
 				if (timer <= 999):
 					printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
@@ -314,7 +317,19 @@ def sjf(temp_processes, cs_time, alpha):
 					sjf_simulation.print_queue()
 					printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
 					sjf_simulation.print_queue()
+			cpu_available_time = timer + (cs_time/2)
 			current_cpu_process = sjf_simulation.get_CPU_process()
+			continue
+		
+		# Add to CPU
+		if sjf_simulation.queue_size() > 0 and current_cpu_process == None:
+			#timer += (cs_time/2)
+			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
+			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
+			#print("Starting at " + str(timer))
+			current_cpu_process = sjf_simulation.get_CPU_process()
+			checked = False
+			continue
 
 		# Move from I/O to Ready Queue
 		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
@@ -327,6 +342,7 @@ def sjf(temp_processes, cs_time, alpha):
 				if (timer <= 999):
 					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
 					sjf_simulation.print_queue()
+			continue
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
@@ -337,33 +353,107 @@ def sjf(temp_processes, cs_time, alpha):
 				printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name(), processes[current_arrival].get_tau(), True)
 				sjf_simulation.print_queue()
 			current_arrival += 1
+			continue
 
-		# Add to CPU
-		if sjf_simulation.queue_size() > 0 and current_cpu_process == None:
-			timer += (cs_time/2)
-			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
-			cpu_start_time = timer
-			if add_half_context:
-				cpu_start_time += (cs_time/2)
-			#print("Starting at " + str(timer))
-			current_cpu_process = sjf_simulation.get_CPU_process()
-			if (timer <= 999):
-				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
-				sjf_simulation.print_queue()
-
-		if add_half_context:
-			timer += (cs_time/2)
-			add_half_context = False
-		else:
-			timer += 1
+		if timer == cpu_start_time and not checked and timer <= 999:
+			checked = True
+			printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
+			sjf_simulation.print_queue()
+		
+		timer += 1
 		# testing
-		if timer > 48000:
+		if current_cpu_process == None and len(sjf_simulation.io) == 0 and len(sjf_simulation.queue) == 0:
 			break
+	timer += 2
+	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SJF [Q <empty>]")
 	print("")
 
-def srt():
+def srt(temp_processes, cs_time):
+	processes = sorted(temp_processes, key = sortByArrivalTime)
+
+	srt_simulation = Simulation()
+
+	add_half_context = False
+	current_arrival = 0
+	current_cpu_process = srt_simulation.get_CPU_process()
+	timer = 0
+	cpu_start_time = 0
+	cpu_available_time = 0
+	checked = False
 	print("time 0ms: " + "Simulator started for SRT [Q <empty>]")
-	print("")
+	
+	while True:
+		# Move from CPU to I/O
+		if current_cpu_process != None and cpu_start_time + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0] == timer:
+			add_half_context = True
+			#timer += (cs_time/2)
+			srt_simulation.removeProcessFromCPU(current_cpu_process)
+			if (current_cpu_process.get_current_burst() == current_cpu_process.get_num_bursts() - 1):
+				printTermination(timer, current_cpu_process.get_name())
+				srt_simulation.print_queue()
+			else:
+				srt_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
+				#print(current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] )
+				current_cpu_process.increment_burst()
+				if (timer <= 999):
+					printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
+					srt_simulation.print_queue()
+				current_cpu_process.update_tau()
+				if (timer <= 999):
+					printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
+					srt_simulation.print_queue()
+					printSwitchToIO(timer, current_cpu_process.get_name(), srt_simulation.get_io_end_time(current_cpu_process))
+					srt_simulation.print_queue()
+			cpu_available_time = timer + (cs_time/2)
+			current_cpu_process = srt_simulation.get_CPU_process()
+			continue
+		
+		# Add to CPU
+		if srt_simulation.queue_size() > 0 and current_cpu_process == None:
+			#timer += (cs_time/2)
+			srt_simulation.addProcessToCPU(srt_simulation.get_next_process())
+			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
+			#print("Starting at " + str(timer))
+			current_cpu_process = srt_simulation.get_CPU_process()
+			checked = False
+			continue
+
+		# Move from I/O to Ready Queue
+		complete_io_processes = srt_simulation.get_complete_io_processes(timer)
+		if len(complete_io_processes) > 0:
+			for io_process in complete_io_processes:
+				srt_simulation.removeProcessFromIO(io_process)
+				srt_simulation.addProcessToQueue(io_process)
+				srt_simulation.queue = sorted(srt_simulation.queue, key= sortByCPUTime)
+				resolveTie(srt_simulation.queue)
+				if (timer <= 999):
+					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
+					srt_simulation.print_queue()
+			continue
+
+		# Process Arrival
+		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
+			srt_simulation.addProcessToQueue(processes[current_arrival])
+			srt_simulation.queue = sorted(srt_simulation.queue, key = sortByCPUTime)
+			resolveTie(srt_simulation.queue)
+			if (timer <= 999):
+				printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name(), processes[current_arrival].get_tau(), True)
+				srt_simulation.print_queue()
+			current_arrival += 1
+			continue
+		
+		# Print CPU Addition
+		if timer == cpu_start_time and not checked and timer <= 999:
+			checked = True
+			printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
+			srt_simulation.print_queue()
+		
+		timer += 1
+		# testing
+		if current_cpu_process == None and len(srt_simulation.io) == 0 and len(srt_simulation.queue) == 0:
+			break
+	timer += 2
+	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SRT [Q <empty>]")
 
 def sortByArrivalTime(process):
 	return process.get_init_arrival()
@@ -502,14 +592,14 @@ for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i], processes[i].get_tau(), True)
 
-sjf(processes, cs_time, alpha)
-"""
+sjf(processes, cs_time)
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
-srt()
-
+srt(processes, cs_time)
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
