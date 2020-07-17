@@ -299,18 +299,34 @@ def sjf(temp_processes, cs_time, alpha):
 			add_half_context = True
 			#timer += (cs_time/2)
 			sjf_simulation.removeProcessFromCPU(current_cpu_process)
-			sjf_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
-			current_cpu_process.increment_burst()
-			if (timer <= 999):
-				printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
+			if (current_cpu_process.get_current_burst() == current_cpu_process.get_num_bursts() - 1):
+				printTermination(timer, current_cpu_process.get_name())
 				sjf_simulation.print_queue()
-			current_cpu_process.update_tau()
-			if (timer <= 999):
-				printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
-				sjf_simulation.print_queue()
-				printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
-				sjf_simulation.print_queue()
+			else:
+				sjf_simulation.addProcessToIO(current_cpu_process, timer + current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[1] + (cs_time/2))
+				current_cpu_process.increment_burst()
+				if (timer <= 999):
+					printCPUEnd(timer, current_cpu_process.get_name(), current_cpu_process.get_num_bursts() - current_cpu_process.get_current_burst(), current_cpu_process.get_tau(), True)
+					sjf_simulation.print_queue()
+				current_cpu_process.update_tau()
+				if (timer <= 999):
+					printNewTau(timer, current_cpu_process.get_tau(), current_cpu_process.get_name())
+					sjf_simulation.print_queue()
+					printSwitchToIO(timer, current_cpu_process.get_name(), sjf_simulation.get_io_end_time(current_cpu_process))
+					sjf_simulation.print_queue()
 			current_cpu_process = sjf_simulation.get_CPU_process()
+
+		# Move from I/O to Ready Queue
+		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
+		if len(complete_io_processes) > 0:
+			for io_process in complete_io_processes:
+				sjf_simulation.removeProcessFromIO(io_process)
+				sjf_simulation.addProcessToQueue(io_process)
+				sjf_simulation.queue = sorted(sjf_simulation.queue, key= sortByCPUTime)
+				resolveTie(sjf_simulation.queue)
+				if (timer <= 999):
+					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
+					sjf_simulation.print_queue()
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
@@ -327,9 +343,12 @@ def sjf(temp_processes, cs_time, alpha):
 			timer += (cs_time/2)
 			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
 			cpu_start_time = timer
+			if add_half_context:
+				cpu_start_time += (cs_time/2)
+			#print("Starting at " + str(timer))
 			current_cpu_process = sjf_simulation.get_CPU_process()
 			if (timer <= 999):
-				printCPUStart(timer, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
+				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
 				sjf_simulation.print_queue()
 
 		if add_half_context:
@@ -338,7 +357,7 @@ def sjf(temp_processes, cs_time, alpha):
 		else:
 			timer += 1
 		# testing
-		if timer > 189 and sjf_simulation.queue_size() == 0:
+		if timer > 48000:
 			break
 	print("")
 
@@ -476,15 +495,15 @@ for i in range(num_processes):
 	processes[i].make_bursts(lamb, upper_bound)
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
-
+"""
 fcfs(processes, cs_time)
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i], processes[i].get_tau(), True)
 
 sjf(processes, cs_time, alpha)
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -497,3 +516,4 @@ for i in range(num_processes):
 
 rr(processes, slice_time, cs_time)
 
+"""
