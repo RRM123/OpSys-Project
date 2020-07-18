@@ -456,13 +456,13 @@ def srt(temp_processes, cs_time):
 			current_cpu_process = preempt_process
 			block_cpu_addition = False
 			preempt_process = None
-			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
+			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(int(current_cpu_process.remaining_cpu[current_cpu_process.current_burst])) +"ms burst remaining", end = " ")
 			srt_simulation.print_queue()
 
 		if timer == cpu_start_time and not checked and not block_cpu_addition:
 			checked = True
 			if timer <= 999:
-				print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
+				print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(int(current_cpu_process.remaining_cpu[current_cpu_process.current_burst])) +"ms burst remaining", end = " ")
 				srt_simulation.print_queue()
 
 		# Move from I/O to Ready Queue
@@ -732,7 +732,7 @@ data_file.write("-- total number of preemptions: 0\n")
 
 for i in range(num_processes):
 	processes[i].reset_bursts()
-	process_arrival(processes[i])
+	process_arrival(processes[i], processes[i].get_tau(), True)
 
 data_file.write("Algorithm SRT\n")
 data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
