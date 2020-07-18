@@ -349,6 +349,12 @@ def sjf(temp_processes, cs_time):
 			current_cpu_process = sjf_simulation.get_CPU_process()
 			continue
 
+		if timer == cpu_start_time and not checked:
+			checked = True
+			if timer <= 999:
+				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
+				sjf_simulation.print_queue()
+
 		# Move from I/O to Ready Queue
 		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
 		if len(complete_io_processes) > 0:
@@ -372,12 +378,6 @@ def sjf(temp_processes, cs_time):
 			current_cpu_process = sjf_simulation.get_CPU_process()
 			checked = False
 			continue
-
-		if timer == cpu_start_time and not checked:
-			checked = True
-			if timer <= 999:
-				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
-				sjf_simulation.print_queue()
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
