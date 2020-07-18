@@ -311,7 +311,7 @@ def sjf(temp_processes, cs_time):
 	processes = sorted(temp_processes, key = sortByArrivalTime)
 
 	sjf_simulation = Simulation()
-
+	first_process_added = False
 	add_half_context = False
 	current_arrival = 0
 	current_cpu_process = sjf_simulation.get_CPU_process()
@@ -377,6 +377,7 @@ def sjf(temp_processes, cs_time):
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
+			first_process_added = True
 			sjf_simulation.addProcessToQueue(processes[current_arrival])
 			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
 			resolveTie(sjf_simulation.queue)
@@ -388,7 +389,7 @@ def sjf(temp_processes, cs_time):
 		
 		timer += 1
 		# testing
-		if current_cpu_process == None and len(sjf_simulation.io) == 0 and len(sjf_simulation.queue) == 0:
+		if current_cpu_process == None and len(sjf_simulation.io) == 0 and len(sjf_simulation.queue) == 0 and first_process_added:
 			break
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SJF [Q <empty>]")
@@ -399,6 +400,7 @@ def srt(temp_processes, cs_time):
 
 	srt_simulation = Simulation()
 
+	first_process_added = False
 	current_arrival = 0
 	current_cpu_process = srt_simulation.get_CPU_process()
 	timer = 0
@@ -508,6 +510,7 @@ def srt(temp_processes, cs_time):
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
+			first_process_added = True
 			srt_simulation.addProcessToQueue(processes[current_arrival])
 			srt_simulation.queue = sorted(srt_simulation.queue, key = sortByCPUTime)
 			resolveTie(srt_simulation.queue)
@@ -519,10 +522,11 @@ def srt(temp_processes, cs_time):
 		
 		timer += 1
 		# testing
-		if current_cpu_process == None and len(srt_simulation.io) == 0 and len(srt_simulation.queue) == 0:
+		if current_cpu_process == None and len(srt_simulation.io) == 0 and len(srt_simulation.queue) == 0 and first_process_added:
 			break
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SRT [Q <empty>]")
+	print("")
 
 def sortByArrivalTime(process):
 	return process.get_init_arrival()
