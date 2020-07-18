@@ -1,4 +1,7 @@
 import sys
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+import numpy
 import math
 import time
 import random48 as rand
