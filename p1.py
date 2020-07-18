@@ -458,7 +458,7 @@ def srt(temp_processes, cs_time):
 				srt_simulation.addProcessToQueue(io_process)
 				srt_simulation.queue = sorted(srt_simulation.queue, key= sortByCPUTime)
 				resolveTie(srt_simulation.queue)
-				if timer <= 999 and current_cpu_process != None and io_process.tau < current_cpu_process.tau and preempt_process == None:
+				if timer <= 999 and current_cpu_process != None and io_process.tau < (current_cpu_process.tau - (timer - cpu_start_time)) and preempt_process == None:
 					print("time " + str(int(timer)) + "ms: " + "Process " + io_process.name + " (tau " + str(int(io_process.tau)) + "ms) completed I/O; preempting " + current_cpu_process.name, end = " ")
 					srt_simulation.print_queue()
 					preempt_process = io_process
@@ -498,7 +498,7 @@ def srt(temp_processes, cs_time):
 			current_cpu_process = preempt_process
 			block_cpu_addition = False
 			preempt_process = None
-			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(current_cpu_process.tau) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
+			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
 			srt_simulation.print_queue()
 
 		# Add to CPU
@@ -515,7 +515,7 @@ def srt(temp_processes, cs_time):
 		if timer == cpu_start_time and not checked and not block_cpu_addition:
 			checked = True
 			if timer <= 999:
-				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.remaining_cpu[current_cpu_process.current_burst], current_cpu_process.get_tau(), True)
+				print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
 				srt_simulation.print_queue()
 
 		# Process Arrival
@@ -713,7 +713,7 @@ avg_cpu_time = getAvgCPUBurstTime(processes)
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
-
+"""
 data_file.write("Algorithm FCFS\n")
 data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
 num_cs = fcfs(processes, cs_time)
@@ -729,7 +729,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs = sjf(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: 0\n")
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -739,7 +739,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = srt(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -749,5 +749,5 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = rr(processes, slice_time, cs_time, add_beginning)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-
+"""
 data_file.close()
