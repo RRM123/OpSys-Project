@@ -3,7 +3,6 @@ import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy
 import math
-import time
 import random48 as rand
 
 alphabet = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G', 8: 'H', 9: 'I', 10: 'J', 11: 'K', 12: 'L', 13: 'M', 14: 'N', 15: 'O', 16: 'P', 17: 'Q', 18: 'R', 19: 'S', 20: 'T', 21: 'U', 22: 'V', 23: 'W', 24: 'X', 25: 'Y', 26: 'Z'}
@@ -712,7 +711,7 @@ for i in range(num_processes):
 	processes[i].make_bursts(lamb, upper_bound)
 
 avg_cpu_time = getAvgCPUBurstTime(processes)
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -722,7 +721,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs = fcfs(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: 0\n")
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i], processes[i].get_tau(), True)
@@ -742,7 +741,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = srt(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-
+"""
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -752,5 +751,5 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = rr(processes, slice_time, cs_time, add_beginning)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-
+"""
 data_file.close()
