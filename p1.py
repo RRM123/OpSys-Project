@@ -319,6 +319,8 @@ def sjf(temp_processes, cs_time):
 	cpu_start_time = -1
 	cpu_available_time = 0
 	checked = False
+	num_cs = 0
+
 	print("time 0ms: " + "Simulator started for SJF [Q <empty>]")
 
 	while True:
@@ -350,6 +352,7 @@ def sjf(temp_processes, cs_time):
 		# Add to CPU
 		if cpu_available_time <= timer and current_cpu_process == None and sjf_simulation.queue_size() > 0:
 			#timer += (cs_time/2)
+			num_cs += 1
 			sjf_simulation.addProcessToCPU(sjf_simulation.get_next_process())
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			#print("Starting at " + str(timer))
@@ -396,6 +399,8 @@ def sjf(temp_processes, cs_time):
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SJF [Q <empty>]")
 	print("")
 
+	return num_cs
+
 def srt(temp_processes, cs_time):
 	processes = sorted(temp_processes, key = sortByArrivalTime)
 
@@ -414,6 +419,9 @@ def srt(temp_processes, cs_time):
 	block_cpu_removal = False
 	block_cpu_addition = False
 	preempt_process = None
+	num_cs = 0
+	num_preemptions = 0
+
 	print("time 0ms: " + "Simulator started for SRT [Q <empty>]")
 	
 	while True:
@@ -496,6 +504,7 @@ def srt(temp_processes, cs_time):
 		# Add to CPU
 		if cpu_available_time <= timer and current_cpu_process == None and srt_simulation.queue_size() > 0 and not block_cpu_addition:
 			#timer += (cs_time/2)
+			num_cs += 1
 			srt_simulation.addProcessToCPU(srt_simulation.get_next_process())
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			#print("Starting at " + str(timer))
@@ -528,6 +537,8 @@ def srt(temp_processes, cs_time):
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SRT [Q <empty>]")
 	print("")
+
+	return num_cs, num_preemptions
 
 def sortByArrivalTime(process):
 	return process.get_init_arrival()
@@ -672,7 +683,6 @@ def getAvgCPUBurstTime(processes):
 		for num in range(process.get_num_bursts()):
 			ans += process.get_cpu_io_times(num)[0]
 
-	print(ans, size)
 	return float(ans) / float(size)
 
 # main ---------------------------------------------------------------------------------------------------
@@ -716,7 +726,8 @@ for i in range(num_processes):
 
 data_file.write("Algorithm SJF\n")
 data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
-sjf(processes, cs_time)
+num_cs = sjf(processes, cs_time)
+data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: 0\n")
 
 for i in range(num_processes):
@@ -725,7 +736,9 @@ for i in range(num_processes):
 
 data_file.write("Algorithm SRT\n")
 data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
-srt(processes, cs_time)
+num_cs, num_preemptions = srt(processes, cs_time)
+data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
+data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
 
 for i in range(num_processes):
 	processes[i].reset_bursts()
