@@ -348,7 +348,20 @@ def sjf(temp_processes, cs_time):
 			cpu_available_time = timer + (cs_time/2)
 			current_cpu_process = sjf_simulation.get_CPU_process()
 			continue
-		
+
+		# Move from I/O to Ready Queue
+		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
+		if len(complete_io_processes) > 0:
+			for io_process in complete_io_processes:
+				sjf_simulation.removeProcessFromIO(io_process)
+				sjf_simulation.addProcessToQueue(io_process)
+				sjf_simulation.queue = sorted(sjf_simulation.queue, key= sortByCPUTime)
+				resolveTie(sjf_simulation.queue)
+				if (timer <= 999):
+					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
+					sjf_simulation.print_queue()
+			continue
+
 		# Add to CPU
 		if cpu_available_time <= timer and current_cpu_process == None and sjf_simulation.queue_size() > 0:
 			#timer += (cs_time/2)
@@ -365,19 +378,6 @@ def sjf(temp_processes, cs_time):
 			if timer <= 999:
 				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
 				sjf_simulation.print_queue()
-
-		# Move from I/O to Ready Queue
-		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
-		if len(complete_io_processes) > 0:
-			for io_process in complete_io_processes:
-				sjf_simulation.removeProcessFromIO(io_process)
-				sjf_simulation.addProcessToQueue(io_process)
-				sjf_simulation.queue = sorted(sjf_simulation.queue, key= sortByCPUTime)
-				resolveTie(sjf_simulation.queue)
-				if (timer <= 999):
-					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
-					sjf_simulation.print_queue()
-			continue
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
@@ -713,7 +713,7 @@ avg_cpu_time = getAvgCPUBurstTime(processes)
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
-"""
+
 data_file.write("Algorithm FCFS\n")
 data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
 num_cs = fcfs(processes, cs_time)
@@ -729,7 +729,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs = sjf(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: 0\n")
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -739,7 +739,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = srt(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -749,5 +749,5 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = rr(processes, slice_time, cs_time, add_beginning)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-"""
+
 data_file.close()
