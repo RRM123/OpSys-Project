@@ -215,6 +215,7 @@ def fcfs(temp_processes, cs_time):
 	cpu_available_time = 0
 	complete_io_processes = []
 	checked = False
+	num_cs = 0
 
 	while True:
 
@@ -242,6 +243,7 @@ def fcfs(temp_processes, cs_time):
 		# add to CPU
 		if fcfs_simulation.queue_size() > 0 and current_cpu_process == None:
 			#timer += (cs_time/2)
+			num_cs += 1
 			fcfs_simulation.addProcessToCPU(fcfs_simulation.get_next_process())
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			current_cpu_process = fcfs_simulation.get_CPU_process()
@@ -287,6 +289,8 @@ def fcfs(temp_processes, cs_time):
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for FCFS [Q <empty>]")
 	print("")
+
+	return num_cs
 
 def resolveTie(sjf_queue):
 	n = len(sjf_queue)
@@ -480,7 +484,6 @@ def sortByName(process):
 
 
 def rr(temp_processes, slice_time, cs_time, beginning):
-	print("")
 	processes = sorted(temp_processes, key = sortByArrivalTime)
 	print("time 0ms: " + "Simulator started for RR [Q <empty>]")
 
@@ -499,7 +502,8 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 	cpu_available_time = 0
 	complete_io_processes = []
 	checked = False
-	slice_okay = True
+	num_cs = 0
+	num_preemptions = 0
 
 	while True:
 
@@ -536,6 +540,7 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 			else:
 				rr_simulation.removeProcessFromCPU(current_cpu_process)
 				current_cpu_process.set_preempted(True)
+				num_preemptions += 1
 				new_time = current_cpu_process.get_cpu_io_times(current_bursts[current_cpu_process.get_name()])[0] - slice_time
 				current_cpu_process.change_cpu_time(current_bursts[current_cpu_process.get_name()], new_time)
 				if timer <= 999:
@@ -555,6 +560,7 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 		# add to CPU
 		if rr_simulation.queue_size() > 0 and current_cpu_process == None and timer >= cpu_available_time:
 			#timer += (cs_time/2)
+			num_cs += 1
 			rr_simulation.addProcessToCPU(rr_simulation.get_next_process())
 			cpu_start_time = timer + (cs_time/2)
 			current_cpu_process = rr_simulation.get_CPU_process()
@@ -603,6 +609,18 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for RR [Q <empty>]")
+	return num_cs, num_preemptions
+
+def getAvgCPUBurstTime(processes):
+	ans = 0
+	for process in processes:
+		temp_ans = 0
+		for num in range(process.get_num_bursts()):
+			temp_ans += process.get_cpu_io_times(num)[0]
+		temp_ans = float(temp_ans) / float(process.get_num_bursts())
+		ans += temp_ans
+
+	return float(ans) / float(len(processes))
 
 # main ---------------------------------------------------------------------------------------------------
 
@@ -621,28 +639,49 @@ random.srand48(seed)
 processes = [None] * num_processes
 temp_seed = seed
 
+data_file = open("simout.txt", "w")
+
 for i in range(num_processes):
 	processes[i] = Process(i+1, lamb, alpha)
 	processes[i].make_bursts(lamb, upper_bound)
+
+avg_cpu_time = getAvgCPUBurstTime(processes)
+
+for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
-fcfs(processes, cs_time)
+data_file.write("Algorithm FCFS\n")
+data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
+num_cs = fcfs(processes, cs_time)
+data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
+data_file.write("-- total number of preemptions: 0\n")
 
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i], processes[i].get_tau(), True)
 
+data_file.write("Algorithm SJF\n")
+data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
 sjf(processes, cs_time)
-"""
+data_file.write("-- total number of preemptions: 0\n")
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
+data_file.write("Algorithm SRT\n")
+data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
 srt(processes, cs_time)
 
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
 
-rr(processes, slice_time, cs_time, add_beginning)
+data_file.write("Algorithm RR\n")
+data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " ms\n")
+num_cs, num_preemptions = rr(processes, slice_time, cs_time, add_beginning)
+data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
+data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
+
+data_file.close()
