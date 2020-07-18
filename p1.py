@@ -450,6 +450,21 @@ def srt(temp_processes, cs_time):
 			current_cpu_process = srt_simulation.get_CPU_process()
 			continue
 		
+		if cpu_add_time == timer and block_cpu_addition and preempt_process != None:
+			srt_simulation.addProcessToCPU(preempt_process)
+			cpu_start_time = timer
+			current_cpu_process = preempt_process
+			block_cpu_addition = False
+			preempt_process = None
+			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
+			srt_simulation.print_queue()
+
+		if timer == cpu_start_time and not checked and not block_cpu_addition:
+			checked = True
+			if timer <= 999:
+				print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
+				srt_simulation.print_queue()
+
 		# Move from I/O to Ready Queue
 		complete_io_processes = srt_simulation.get_complete_io_processes(timer)
 		if len(complete_io_processes) > 0:
@@ -492,15 +507,6 @@ def srt(temp_processes, cs_time):
 			block_cpu_addition = True
 			continue
 
-		if cpu_add_time == timer and block_cpu_addition and preempt_process != None:
-			srt_simulation.addProcessToCPU(preempt_process)
-			cpu_start_time = timer
-			current_cpu_process = preempt_process
-			block_cpu_addition = False
-			preempt_process = None
-			print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
-			srt_simulation.print_queue()
-
 		# Add to CPU
 		if cpu_available_time <= timer and current_cpu_process == None and srt_simulation.queue_size() > 0 and not block_cpu_addition:
 			#timer += (cs_time/2)
@@ -511,12 +517,6 @@ def srt(temp_processes, cs_time):
 			current_cpu_process = srt_simulation.get_CPU_process()
 			checked = False
 			continue
-
-		if timer == cpu_start_time and not checked and not block_cpu_addition:
-			checked = True
-			if timer <= 999:
-				print("time "+ str(timer) + "ms: Process " + current_cpu_process.name + " (tau "+ str(int(current_cpu_process.tau)) +"ms) started using the CPU with "+ str(current_cpu_process.remaining_cpu[current_cpu_process.current_burst]) +"ms burst remaining", end = " ")
-				srt_simulation.print_queue()
 
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
