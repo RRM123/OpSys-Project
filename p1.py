@@ -666,14 +666,14 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 
 def getAvgCPUBurstTime(processes):
 	ans = 0
+	size = 0
 	for process in processes:
-		temp_ans = 0
+		size += process.get_num_bursts()
 		for num in range(process.get_num_bursts()):
-			temp_ans += process.get_cpu_io_times(num)[0]
-		temp_ans = float(temp_ans) / float(process.get_num_bursts())
-		ans += temp_ans
+			ans += process.get_cpu_io_times(num)[0]
 
-	return float(ans) / float(len(processes))
+	print(ans, size)
+	return float(ans) / float(size)
 
 # main ---------------------------------------------------------------------------------------------------
 
