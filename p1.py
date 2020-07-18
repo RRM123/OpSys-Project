@@ -347,18 +347,6 @@ def sjf(temp_processes, cs_time):
 			current_cpu_process = sjf_simulation.get_CPU_process()
 			continue
 		
-		# Move from I/O to Ready Queue
-		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
-		if len(complete_io_processes) > 0:
-			for io_process in complete_io_processes:
-				sjf_simulation.removeProcessFromIO(io_process)
-				sjf_simulation.addProcessToQueue(io_process)
-				sjf_simulation.queue = sorted(sjf_simulation.queue, key= sortByCPUTime)
-				resolveTie(sjf_simulation.queue)
-				if (timer <= 999):
-					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
-					sjf_simulation.print_queue()
-			continue
 		# Add to CPU
 		if cpu_available_time <= timer and current_cpu_process == None and sjf_simulation.queue_size() > 0:
 			#timer += (cs_time/2)
@@ -375,6 +363,19 @@ def sjf(temp_processes, cs_time):
 				printCPUStart(cpu_start_time, current_cpu_process.get_name(), current_cpu_process.get_cpu_io_times(current_cpu_process.get_current_burst())[0], current_cpu_process.get_tau(), True)
 				sjf_simulation.print_queue()
 
+		# Move from I/O to Ready Queue
+		complete_io_processes = sjf_simulation.get_complete_io_processes(timer)
+		if len(complete_io_processes) > 0:
+			for io_process in complete_io_processes:
+				sjf_simulation.removeProcessFromIO(io_process)
+				sjf_simulation.addProcessToQueue(io_process)
+				sjf_simulation.queue = sorted(sjf_simulation.queue, key= sortByCPUTime)
+				resolveTie(sjf_simulation.queue)
+				if (timer <= 999):
+					printIOComplete(timer, io_process.get_name(), io_process.get_tau(), True)
+					sjf_simulation.print_queue()
+			continue
+
 		# Process Arrival
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() <= timer:
 			first_process_added = True
@@ -387,10 +388,10 @@ def sjf(temp_processes, cs_time):
 			current_arrival += 1
 			continue
 		
-		timer += 1
 		# testing
 		if current_cpu_process == None and len(sjf_simulation.io) == 0 and len(sjf_simulation.queue) == 0 and first_process_added:
 			break
+		timer += 1
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SJF [Q <empty>]")
 	print("")
@@ -520,10 +521,10 @@ def srt(temp_processes, cs_time):
 			current_arrival += 1
 			continue
 		
-		timer += 1
 		# testing
 		if current_cpu_process == None and len(srt_simulation.io) == 0 and len(srt_simulation.queue) == 0 and first_process_added:
 			break
+		timer += 1
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SRT [Q <empty>]")
 	print("")
