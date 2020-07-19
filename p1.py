@@ -354,6 +354,7 @@ def sjf(temp_processes, cs_time):
 			add_half_context = True
 			#timer += (cs_time/2)
 			sjf_simulation.removeProcessFromCPU(current_cpu_process)
+			turnaround_times[current_cpu_process.get_name()] += (cpu_available_time + (cs_time/2) - turnaround_start_times[current_cpu_process.get_name()])
 			if (current_cpu_process.get_current_burst() == current_cpu_process.get_num_bursts() - 1):
 				printTermination(timer, current_cpu_process.get_name())
 				sjf_simulation.print_queue()
@@ -403,6 +404,7 @@ def sjf(temp_processes, cs_time):
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			#print("Starting at " + str(timer))
 			current_cpu_process = sjf_simulation.get_CPU_process()
+			wait_times[current_cpu_process.name] += (timer - wait_start_times[current_cpu_process.name])
 			checked = False
 			continue
 
@@ -412,6 +414,8 @@ def sjf(temp_processes, cs_time):
 			sjf_simulation.addProcessToQueue(processes[current_arrival])
 			sjf_simulation.queue = sorted(sjf_simulation.queue, key = sortByCPUTime)
 			resolveTie(sjf_simulation.queue)
+			wait_start_times[processes[current_arrival].name] = timer
+			turnaround_start_times[processes[current_arrival].name] = timer
 			if (timer <= 999):
 				printArrival(processes[current_arrival].get_init_arrival(), processes[current_arrival].get_name(), processes[current_arrival].get_tau(), True)
 				sjf_simulation.print_queue()
@@ -425,6 +429,21 @@ def sjf(temp_processes, cs_time):
 	timer += 2
 	print("time " + str(int(timer)) + "ms: " + "Simulator ended for SJF [Q <empty>]")
 	print("")
+
+	
+	ans = 0
+	size = 0
+	ans2 = 0
+	for process in processes:
+		size += process.get_num_bursts()
+		ans += turnaround_times[process.get_name()]
+		ans2 += wait_times[process.get_name()]
+
+	ans = round(float(ans) / float(size), 3)
+	ans2 = round(float(ans2) / float(size), 3)
+
+	data_file.write("-- average wait time: " + "{:.3f}".format(ans2) + " ms\n")
+	data_file.write("-- average turnaround time: " + "{:.3f}".format(ans) + " ms\n")
 
 	return num_cs
 
