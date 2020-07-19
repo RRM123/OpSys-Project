@@ -302,7 +302,6 @@ def fcfs(temp_processes, cs_time):
 		size += process.get_num_bursts()
 		ans += turnaround_times[process.get_name()]
 		ans2 += wait_times[process.get_name()]
-	print(ans, size)
 	ans = round(float(ans) / float(size), 3)
 	ans2 = round(float(ans2) / float(size), 3)
 
@@ -561,7 +560,7 @@ def srt(temp_processes, cs_time):
 		if cpu_remove_time == timer and block_cpu_removal and preempt_process != None:
 			srt_simulation.removeProcessFromCPU(current_cpu_process)
 			srt_simulation.addProcessToQueue(current_cpu_process)
-			wait_times[current_cpu_process.name] += timer - (cs_time/2) - wait_start_times[current_cpu_process.name]
+			#wait_times[current_cpu_process.name] += timer - (cs_time/2) - wait_start_times[current_cpu_process.name]
 			wait_start_times[current_cpu_process.name] = timer
 			srt_simulation.queue = sorted(srt_simulation.queue, key= sortByCPUTime)
 			resolveTie(srt_simulation.queue)
@@ -580,7 +579,7 @@ def srt(temp_processes, cs_time):
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			#print("Starting at " + str(timer))
 			current_cpu_process = srt_simulation.get_CPU_process()
-			wait_times[current_cpu_process.name] += cpu_available_time - wait_start_times[current_cpu_process.name]
+			wait_times[current_cpu_process.name] += max(cpu_available_time, timer) - wait_start_times[current_cpu_process.name]
 			checked = False
 			continue
 
@@ -801,13 +800,22 @@ def getAvgCPUBurstTime(processes):
 # main ---------------------------------------------------------------------------------------------------
 
 num_processes = int(sys.argv[1])
+if num_processes < 0 or num_processes > 26:
+	sys.stderr.write("ERROR: invalid number of processes\n")
+	sys.exit()
 seed = int(sys.argv[2])											#48-bit linear congruential generator
 lamb = float(sys.argv[3])										#exp-random.c
 upper_bound = int(sys.argv[4])
 cs_time = int(sys.argv[5])										#context switch time
+if not cs_time % 2 == 0:
+	sys.stderr.write("ERROR: context-switch time must be even\n")
+	sys.exit()
 alpha = float(sys.argv[6])										#estimate for SJF and SRT
 slice_time = int(sys.argv[7])									#time slice value for RR
 rr_add = sys.argv[8] if len(sys.argv) > 8 else "END"			#adding format for RR
+if not (rr_add == "BEGINNING" or rr_add == "END"):
+	sys.stderr.write("ERROR: invalid adding format for RR\n")
+	sys.exit()
 
 add_beginning = True if rr_add == "BEGINNING" else False
 random.srand48(seed)
