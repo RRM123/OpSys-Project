@@ -203,14 +203,12 @@ def fcfs(temp_processes, cs_time):
 	current_bursts = {}
 	terminated_processes = {}
 	turnaround_times = {}
-	turnaround_start_times = {}
 	wait_times = {}
 	wait_start_times = {}
 	for i in range(len(processes)):
 		current_bursts[processes[i].get_name()] = 0
 		terminated_processes[processes[i].get_name()] = False
 		turnaround_times[processes[i].get_name()] = 0
-		turnaround_start_times[processes[i].get_name()] = 0
 		wait_times[processes[i].get_name()] = 0
 		wait_start_times[processes[i].get_name()] = 0
 	timer = 0
@@ -239,7 +237,7 @@ def fcfs(temp_processes, cs_time):
 					printSwitchToIO(timer, current_cpu_process.get_name(), fcfs_simulation.get_io_end_time(current_cpu_process))
 					fcfs_simulation.print_queue()
 			cpu_available_time = timer + (cs_time/2)
-			turnaround_times[current_cpu_process.get_name()] += (timer + (cs_time/2) - turnaround_start_times[current_cpu_process.get_name()])
+			turnaround_times[current_cpu_process.get_name()] += (timer + (cs_time/2) - wait_start_times[current_cpu_process.get_name()])
 			current_bursts[current_cpu_process.get_name()] += 1
 			current_cpu_process = fcfs_simulation.get_CPU_process()
 			continue
@@ -251,9 +249,7 @@ def fcfs(temp_processes, cs_time):
 			fcfs_simulation.addProcessToCPU(fcfs_simulation.get_next_process())
 			cpu_start_time = max(cpu_available_time, timer) + (cs_time/2)
 			current_cpu_process = fcfs_simulation.get_CPU_process()
-			turnaround_start_times[current_cpu_process.get_name()] = max(cpu_available_time, timer)
 			wait_times[current_cpu_process.get_name()] += (max(cpu_available_time, timer) - wait_start_times[current_cpu_process.get_name()])
-			wait_start_times[current_cpu_process.get_name()] = 0
 			checked = False
 			continue
 
@@ -304,7 +300,7 @@ def fcfs(temp_processes, cs_time):
 	ans2 = 0
 	for process in processes:
 		size += process.get_num_bursts()
-		ans += (turnaround_times[process.get_name()] + wait_times[process.get_name()])
+		ans += turnaround_times[process.get_name()]
 		ans2 += wait_times[process.get_name()]
 	print(ans, size)
 	ans = round(float(ans) / float(size), 3)
@@ -585,7 +581,7 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 		current_bursts[processes[i].get_name()] = 0
 		terminated_processes[processes[i].get_name()] = False
 		turnaround_times[processes[i].get_name()] = 0
-		turnaround_start_times[processes[i].get_name()] = -1
+		turnaround_start_times[processes[i].get_name()] = 0
 		wait_times[processes[i].get_name()] = 0
 		wait_start_times[processes[i].get_name()] = 0
 	timer = 0
@@ -616,7 +612,6 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 					rr_simulation.print_queue()
 			cpu_available_time = timer + (cs_time/2)
 			turnaround_times[current_cpu_process.get_name()] += (cpu_available_time - turnaround_start_times[current_cpu_process.get_name()])
-			turnaround_start_times[current_cpu_process.get_name()] = -1
 			current_bursts[current_cpu_process.get_name()] += 1
 			current_cpu_process = rr_simulation.get_CPU_process()
 			continue
@@ -658,8 +653,6 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 			rr_simulation.addProcessToCPU(rr_simulation.get_next_process())
 			cpu_start_time = timer + (cs_time/2)
 			current_cpu_process = rr_simulation.get_CPU_process()
-			if turnaround_start_times[current_cpu_process.get_name()] == -1:
-				turnaround_start_times[current_cpu_process.get_name()] = timer
 			wait_times[current_cpu_process.get_name()] += (timer - wait_start_times[current_cpu_process.get_name()])
 			checked = False
 			continue
@@ -682,6 +675,7 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 				rr_simulation.removeProcessFromIO(process)
 				rr_simulation.addProcessToQueue(process, beginning)
 				wait_start_times[process.get_name()] = timer
+				turnaround_start_times[process.get_name()] = timer
 				if timer <= 999:
 					printIOComplete(timer, process.get_name())
 					rr_simulation.print_queue()
@@ -691,6 +685,7 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 		if current_arrival < len(processes) and processes[current_arrival].get_init_arrival() == timer:
 			rr_simulation.addProcessToQueue(processes[current_arrival])
 			wait_start_times[processes[current_arrival].get_name()] = timer
+			turnaround_start_times[processes[current_arrival].get_name()] = timer
 			if timer <= 999:
 				printArrival(timer, processes[current_arrival].get_name())
 				rr_simulation.print_queue()
@@ -714,10 +709,10 @@ def rr(temp_processes, slice_time, cs_time, beginning):
 	ans2 = 0
 	for process in processes:
 		size += process.get_num_bursts()
-		ans += (turnaround_times[process.get_name()] + wait_times[process.get_name()])
+		ans += turnaround_times[process.get_name()]
 		ans2 += wait_times[process.get_name()]
 
-	ans = round(float(ans) / float(num_cs), 3)
+	ans = round(float(ans) / float(size), 3)
 	ans2 = round(float(ans2) / float(size), 3)
 
 	data_file.write("-- average wait time: " + "{:.3f}".format(ans2) + " ms\n")
@@ -757,7 +752,7 @@ for i in range(num_processes):
 	processes[i].make_bursts(lamb, upper_bound)
 
 avg_cpu_time = getAvgCPUBurstTime(processes)
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -767,7 +762,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs = fcfs(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: 0\n")
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i], processes[i].get_tau(), True)
@@ -787,7 +782,7 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = srt(processes, cs_time)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-"""
+
 for i in range(num_processes):
 	processes[i].reset_bursts()
 	process_arrival(processes[i])
@@ -797,5 +792,5 @@ data_file.write("-- average CPU burst time: " + str(round(avg_cpu_time, 3)) + " 
 num_cs, num_preemptions = rr(processes, slice_time, cs_time, add_beginning)
 data_file.write("-- total number of context switches: " + str(num_cs) + "\n")
 data_file.write("-- total number of preemptions: " + str(num_preemptions) + "\n")
-"""
+
 data_file.close()
